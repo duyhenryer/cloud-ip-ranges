@@ -59,8 +59,9 @@ jobs:
               ;;
             oracle)
               curl -sSL https://docs.oracle.com/iaas/tools/public_ip_ranges.json -o data/oracle/ranges.json
-              jq -r '.ranges[].cidr' data/oracle/ranges.json | grep -E '^[0-9]+\.' | sort -u > data/oracle/ipv4.txt
-              jq -r '.ranges[].cidr' data/oracle/ranges.json | grep ':' | sort -u > data/oracle/ipv6.txt
+              jq -r '.regions[]?.cidrs[]?.cidr' data/oracle/ranges.json | sort -u > data/oracle/all-cidrs.txt
+              grep -E '^[0-9]+\.' data/oracle/all-cidrs.txt > data/oracle/ipv4.txt || true
+              grep -E ':' data/oracle/all-cidrs.txt > data/oracle/ipv6.txt || true
               ;;
           esac
           date -u '+%Y-%m-%d %H:%M:%S UTC' > data/${{ matrix.provider }}/last-updated.txt
