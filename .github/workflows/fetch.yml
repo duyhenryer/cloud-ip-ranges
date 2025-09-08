@@ -1,4 +1,4 @@
-name: Update Cloud Provider IP Ranges
+name: Auto Update Cloud Provider IP Ranges
 
 on:
   schedule:
@@ -85,10 +85,10 @@ jobs:
       - name: Prepare data
         run: |
           mkdir -p data
-          for provider in artifacts/*; do
-            name=$(basename "$provider" | sed 's/-data//')
-            mkdir -p data/$name
-            cp -r "$provider"/data/$name/* data/$name/ || true
+          for provider_dir in artifacts/*; do
+            provider=$(basename "$provider_dir" | sed 's/-data//')
+            mkdir -p data/$provider
+            cp -r "$provider_dir"/* data/$provider/ || true
           done
 
       - name: Create merged files
@@ -102,14 +102,14 @@ jobs:
 
           echo "IPv4 ranges by provider:"
           for f in data/*/ipv4.txt; do
-            p=$(basename $(dirname $f))
-            echo "  $p: $(wc -l < $f)"
+            p=$(basename $(dirname "$f"))
+            echo "  $p: $(wc -l < "$f")"
           done
 
           echo "IPv6 ranges by provider:"
           for f in data/*/ipv6.txt; do
-            p=$(basename $(dirname $f))
-            echo "  $p: $(wc -l < $f)"
+            p=$(basename $(dirname "$f"))
+            echo "  $p: $(wc -l < "$f")"
           done
 
           cat > merged/README.md <<EOF
@@ -120,20 +120,3 @@ jobs:
           - IPv6: $ipv6_count
           - Total: $((ipv4_count+ipv6_count))
           EOF
-
-      - name: Detect changes
-        id: changed
-        uses: tj-actions/changed-files@v44
-        with:
-          files: |
-            data/**
-            merged/**
-
-      - name: Commit & Push
-        if: steps.changed.outputs.any_changed == 'true'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add data merged
-          git commit -m "chore: update IP ranges - $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          git push
