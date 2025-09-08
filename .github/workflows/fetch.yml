@@ -1,0 +1,126 @@
+name: Update Cloud Provider IP Ranges (Simplified)
+
+on:
+  schedule:
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+    inputs:
+      providers:
+        description: 'Select providers'
+        type: choice
+        options: [all, aws, cloudflare, gcp, digitalocean, oracle]
+        default: all
+      create-merged:
+        description: 'Create merged files'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [aws, cloudflare, gcp, digitalocean, oracle]
+    if: |
+      github.event.inputs.providers == 'all' || 
+      github.event.inputs.providers == matrix.provider || 
+      github.event_name == 'schedule'
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y jq curl
+
+      - name: Fetch ${{ matrix.provider }} IP ranges
+        run: |
+          set -e
+          mkdir -p data/${{ matrix.provider }}
+          case "${{ matrix.provider }}" in
+            aws)
+              curl -sSL https://ip-ranges.amazonaws.com/ip-ranges.json -o data/aws/ip-ranges.json
+              jq -r '.prefixes[].ip_prefix' data/aws/ip-ranges.json | sort -u > data/aws/ipv4.txt
+              jq -r '.ipv6_prefixes[].ipv6_prefix' data/aws/ip-ranges.json | sort -u > data/aws/ipv6.txt
+              ;;
+            cloudflare)
+              curl -sSL https://www.cloudflare.com/ips-v4 -o data/cloudflare/ipv4.txt
+              curl -sSL https://www.cloudflare.com/ips-v6 -o data/cloudflare/ipv6.txt
+              sort -u -o data/cloudflare/ipv4.txt data/cloudflare/ipv4.txt
+              sort -u -o data/cloudflare/ipv6.txt data/cloudflare/ipv6.txt
+              ;;
+            gcp)
+              curl -sSL https://www.gstatic.com/ipranges/cloud.json -o data/gcp/cloud.json
+              jq -r '.prefixes[]?.ipv4Prefix' data/gcp/cloud.json | sort -u > data/gcp/ipv4.txt
+              jq -r '.prefixes[]?.ipv6Prefix' data/gcp/cloud.json | sort -u > data/gcp/ipv6.txt
+              ;;
+            digitalocean)
+              curl -sSL https://digitalocean.com/geo/google.csv -o data/digitalocean/ranges.csv
+              awk -F',' 'NR>1 {print $1}' data/digitalocean/ranges.csv | grep '/' | sort -u > data/digitalocean/ipv4.txt
+              : > data/digitalocean/ipv6.txt
+              ;;
+            oracle)
+              curl -sSL https://docs.oracle.com/iaas/tools/public_ip_ranges.json -o data/oracle/ranges.json
+              jq -r '.ranges[].cidr' data/oracle/ranges.json | grep -E '^[0-9]+\.' | sort -u > data/oracle/ipv4.txt
+              jq -r '.ranges[].cidr' data/oracle/ranges.json | grep ':' | sort -u > data/oracle/ipv6.txt
+              ;;
+          esac
+          date -u '+%Y-%m-%d %H:%M:%S UTC' > data/${{ matrix.provider }}/last-updated.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.provider }}-data
+          path: data/${{ matrix.provider }}
+
+  merge-and-commit:
+    runs-on: ubuntu-latest
+    needs: update
+    if: github.event.inputs.create-merged != 'false'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare data
+        run: |
+          mkdir -p data
+          cp -r artifacts/*/* data/ || true
+
+      - name: Create merged files
+        run: |
+          mkdir -p merged
+          cat data/*/ipv4.txt | sort -u > merged/all-ipv4.txt
+          cat data/*/ipv6.txt | sort -u > merged/all-ipv6.txt
+
+          ipv4_count=$(wc -l < merged/all-ipv4.txt)
+          ipv6_count=$(wc -l < merged/all-ipv6.txt)
+
+          cat > merged/README.md <<EOF
+          # Cloud Provider IP Ranges
+          Last updated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+
+          - IPv4: $ipv4_count
+          - IPv6: $ipv6_count
+          - Total: $((ipv4_count+ipv6_count))
+          EOF
+
+      - name: Detect changes
+        id: changed
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            data/**
+            merged/**
+
+      - name: Commit & Push
+        if: steps.changed.outputs.any_changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data merged
+          git commit -m "chore: update IP ranges - $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          git push
