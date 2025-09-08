@@ -91,41 +91,42 @@ jobs:
             cp -r "$provider_dir"/* data/$provider/ || true
           done
 
-      - name: Create merged files
+      - name: Create merged files at root
         run: |
-          mkdir -p merged
-          cat data/*/ipv4.txt | sort -u > merged/all-ipv4.txt
-          cat data/*/ipv6.txt | sort -u > merged/all-ipv6.txt
-
-          ipv4_count=$(wc -l < merged/all-ipv4.txt)
-          ipv6_count=$(wc -l < merged/all-ipv6.txt)
-
+          # Create merged files at root level
+          cat data/*/ipv4.txt | sort -u > all-ipv4.txt
+          cat data/*/ipv6.txt | sort -u > all-ipv6.txt
+          
+          # Show statistics
+          echo "📊 IP Ranges Statistics:"
           echo "IPv4 ranges by provider:"
+          total_ipv4=0
           for f in data/*/ipv4.txt; do
             p=$(basename $(dirname "$f"))
-            echo "  $p: $(wc -l < "$f")"
+            count=$(wc -l < "$f")
+            echo "  $p: $count"
+            total_ipv4=$((total_ipv4 + count))
           done
 
-          echo "IPv6 ranges by provider:"
+          echo "IPv6 ranges by provider:"  
+          total_ipv6=0
           for f in data/*/ipv6.txt; do
             p=$(basename $(dirname "$f"))
-            echo "  $p: $(wc -l < "$f")"
+            count=$(wc -l < "$f")
+            echo "  $p: $count"
+            total_ipv6=$((total_ipv6 + count))
           done
-
-          cat > merged/README.md <<EOF
-          # Cloud Provider IP Ranges
-          Last updated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-
-          - IPv4: $ipv4_count
-          - IPv6: $ipv6_count
-          - Total: $((ipv4_count+ipv6_count))
-          EOF
+          
+          # Final counts
+          ipv4_merged=$(wc -l < all-ipv4.txt)
+          ipv6_merged=$(wc -l < all-ipv6.txt)
+          echo "📈 Merged: IPv4=$ipv4_merged, IPv6=$ipv6_merged, Total=$((ipv4_merged+ipv6_merged))"
 
       - name: Commit & Push
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add data merged
+          git config --local user.email "duynhbot@users.noreply.github.com"
+          git config --local user.name "duynhbot"
+          git add data all-ipv4.txt all-ipv6.txt
           
           # Check if there are changes to commit
           if git diff --staged --quiet; then
