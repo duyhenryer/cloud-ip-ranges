@@ -54,8 +54,8 @@ jobs:
               ;;
             digitalocean)
               curl -sSL https://digitalocean.com/geo/google.csv -o data/digitalocean/ranges.csv
-              awk -F',' 'NR>1 {print $1}' data/digitalocean/ranges.csv | grep '/' | sort -u > data/digitalocean/ipv4.txt
-              : > data/digitalocean/ipv6.txt
+              awk -F',' 'NR>1 {print $1}' data/digitalocean/ranges.csv | grep -E '^[0-9]+\.' | sort -u > data/digitalocean/ipv4.txt
+              awk -F',' 'NR>1 {print $1}' data/digitalocean/ranges.csv | grep -E ':' | sort -u > data/digitalocean/ipv6.txt
               ;;
             oracle)
               curl -sSL https://docs.oracle.com/iaas/tools/public_ip_ranges.json -o data/oracle/ranges.json
