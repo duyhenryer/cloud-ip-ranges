@@ -8,7 +8,7 @@ on:
       providers:
         description: 'Select providers'
         type: choice
-        options: [all, aws, cloudflare, gcp, digitalocean, oracle]
+        options: [all, aws, cloudflare, gcp, digitalocean, oracle, linode]
         default: all
 permissions:
   contents: write
@@ -23,8 +23,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y jq curl
-
       - name: Fetch ${{ matrix.provider }} ranges
         if: github.event_name == 'schedule' || github.event.inputs.providers == 'all' || github.event.inputs.providers == matrix.provider
         run: |
@@ -57,6 +55,11 @@ jobs:
               jq -r '.regions[]?.cidrs[]?.cidr' data/oracle/ranges.json | sort -u > data/oracle/all-cidrs.txt
               grep -E '^[0-9]+\.' data/oracle/all-cidrs.txt > data/oracle/ipv4.txt || true
               grep -E ':' data/oracle/all-cidrs.txt > data/oracle/ipv6.txt || true
+              ;;
+            linode)
+              curl -sSL https://geoip.linode.com -o data/linode/ranges.csv
+              grep -v '^#' data/linode/ranges.csv | awk -F',' '{print $1}' | grep -E '^[0-9]+\.' | sort -u > data/linode/ipv4.txt
+              grep -v '^#' data/linode/ranges.csv | awk -F',' '{print $1}' | grep ':' | sort -u > data/linode/ipv6.txt
               ;;
           esac
           date -u '+%Y-%m-%d %H:%M:%S UTC' > data/${{ matrix.provider }}/last-updated.txt
