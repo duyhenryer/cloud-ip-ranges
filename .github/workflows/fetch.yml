@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        provider: [aws, cloudflare, gcp, digitalocean, oracle, linode]
+        provider: [aws, gcp, google, cloudflare, digitalocean, oracle, linode, github, telegram]
 
     steps:
       - uses: actions/checkout@v4
@@ -60,6 +60,26 @@ jobs:
               curl -sSL https://geoip.linode.com -o data/linode/ranges.csv
               grep -v '^#' data/linode/ranges.csv | awk -F',' '{print $1}' | grep -E '^[0-9]+\.' | sort -u > data/linode/ipv4.txt
               grep -v '^#' data/linode/ranges.csv | awk -F',' '{print $1}' | grep ':' | sort -u > data/linode/ipv6.txt
+              ;;
+            github)
+              curl -sSL https://api.github.com/meta -o data/github/meta.json
+              jq -r '.hooks[], .web[], .api[], .git[], .packages[], .pages[], .actions[]? // empty' data/github/meta.json | grep -E '^[0-9]+\.' | sort -u > data/github/ipv4.txt || true
+              jq -r '.hooks[], .web[], .api[], .git[], .packages[], .pages[], .actions[]? // empty' data/github/meta.json | grep ':' | sort -u > data/github/ipv6.txt || true
+              ;;
+            telegram)
+              curl -sSL https://core.telegram.org/resources/cidr.txt -o data/telegram/cidr.txt
+              grep -E '^[0-9]+\.' data/telegram/cidr.txt | sort -u > data/telegram/ipv4.txt || true
+              grep -E ':' data/telegram/cidr.txt | sort -u > data/telegram/ipv6.txt || true
+              ;;
+            gcp)
+              curl -sSL https://www.gstatic.com/ipranges/cloud.json -o data/gcp/cloud.json
+              jq -r '.prefixes[]?.ipv4Prefix' data/gcp/cloud.json | sort -u > data/gcp/ipv4.txt
+              jq -r '.prefixes[]?.ipv6Prefix' data/gcp/cloud.json | sort -u > data/gcp/ipv6.txt
+              ;;
+            google)
+              curl -sSL https://www.gstatic.com/ipranges/goog.txt -o data/google/goog.txt
+              grep -E '^[0-9]+\.' data/google/goog.txt | sort -u > data/google/ipv4.txt || true
+              grep -E ':' data/google/goog.txt | sort -u > data/google/ipv6.txt || true
               ;;
           esac
           date -u '+%Y-%m-%d %H:%M:%S UTC' > data/${{ matrix.provider }}/last-updated.txt
