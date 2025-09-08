@@ -85,7 +85,11 @@ jobs:
       - name: Prepare data
         run: |
           mkdir -p data
-          cp -r artifacts/*/* data/ || true
+          for provider in artifacts/*; do
+            name=$(basename "$provider" | sed 's/-data//')
+            mkdir -p data/$name
+            cp -r "$provider"/data/$name/* data/$name/ || true
+          done
 
       - name: Create merged files
         run: |
@@ -95,6 +99,18 @@ jobs:
 
           ipv4_count=$(wc -l < merged/all-ipv4.txt)
           ipv6_count=$(wc -l < merged/all-ipv6.txt)
+
+          echo "IPv4 ranges by provider:"
+          for f in data/*/ipv4.txt; do
+            p=$(basename $(dirname $f))
+            echo "  $p: $(wc -l < $f)"
+          done
+
+          echo "IPv6 ranges by provider:"
+          for f in data/*/ipv6.txt; do
+            p=$(basename $(dirname $f))
+            echo "  $p: $(wc -l < $f)"
+          done
 
           cat > merged/README.md <<EOF
           # Cloud Provider IP Ranges
