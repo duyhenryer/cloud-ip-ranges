@@ -1,4 +1,4 @@
-name: Update Cloud Provider IP Ranges (Simplified)
+name: Update Cloud Provider IP Ranges
 
 on:
   schedule:
@@ -25,16 +25,13 @@ jobs:
       fail-fast: false
       matrix:
         provider: [aws, cloudflare, gcp, digitalocean, oracle]
-    if: |
-      github.event.inputs.providers == 'all' || 
-      github.event.inputs.providers == matrix.provider || 
-      github.event_name == 'schedule'
 
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y jq curl
 
-      - name: Fetch ${{ matrix.provider }} IP ranges
+      - name: Fetch ${{ matrix.provider }} ranges
+        if: github.event_name == 'schedule' || github.event.inputs.providers == 'all' || github.event.inputs.providers == matrix.provider
         run: |
           set -e
           mkdir -p data/${{ matrix.provider }}
@@ -69,6 +66,7 @@ jobs:
           date -u '+%Y-%m-%d %H:%M:%S UTC' > data/${{ matrix.provider }}/last-updated.txt
 
       - uses: actions/upload-artifact@v4
+        if: github.event_name == 'schedule' || github.event.inputs.providers == 'all' || github.event.inputs.providers == matrix.provider
         with:
           name: ${{ matrix.provider }}-data
           path: data/${{ matrix.provider }}
@@ -80,7 +78,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
