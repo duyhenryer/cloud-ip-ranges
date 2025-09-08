@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        provider: [aws, cloudflare, gcp, digitalocean, oracle]
+        provider: [aws, cloudflare, gcp, digitalocean, oracle, linode]
 
     steps:
       - uses: actions/checkout@v4
