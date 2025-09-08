@@ -71,16 +71,6 @@ jobs:
               grep -E '^[0-9]+\.' data/telegram/cidr.txt | sort -u > data/telegram/ipv4.txt || true
               grep -E ':' data/telegram/cidr.txt | sort -u > data/telegram/ipv6.txt || true
               ;;
-            gcp)
-              curl -sSL https://www.gstatic.com/ipranges/cloud.json -o data/gcp/cloud.json
-              jq -r '.prefixes[]?.ipv4Prefix' data/gcp/cloud.json | sort -u > data/gcp/ipv4.txt
-              jq -r '.prefixes[]?.ipv6Prefix' data/gcp/cloud.json | sort -u > data/gcp/ipv6.txt
-              ;;
-            google)
-              curl -sSL https://www.gstatic.com/ipranges/goog.txt -o data/google/goog.txt
-              grep -E '^[0-9]+\.' data/google/goog.txt | sort -u > data/google/ipv4.txt || true
-              grep -E ':' data/google/goog.txt | sort -u > data/google/ipv6.txt || true
-              ;;
           esac
           date -u '+%Y-%m-%d %H:%M:%S UTC' > data/${{ matrix.provider }}/last-updated.txt
 

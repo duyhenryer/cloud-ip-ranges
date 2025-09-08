@@ -14,3 +14,7 @@
     - IPv4/6: https://docs.oracle.com/iaas/tools/public_ip_ranges.json
 - Linode 
     - IPv4/6: https://geoip.linode.com/
+- GitHub:
+    - IPv4/6: https://api.github.com/meta
+- Telegram
+    - IPv4/6: https://core.telegram.org/resources/cidr.txt
