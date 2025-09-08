@@ -121,19 +121,19 @@ jobs:
           - Total: $((ipv4_count+ipv6_count))
           EOF
 
-      - name: Detect changes
-        id: changed
-        uses: tj-actions/changed-files@v44
-        with:
-          files: |
-            data/**
-            merged/**
-
       - name: Commit & Push
-        if: steps.changed.outputs.any_changed == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add data merged
-          git commit -m "chore: update IP ranges - $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          git push
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "✅ No changes to commit"
+          else
+            echo "📝 Changes detected, committing..."
+            git status --porcelain
+            git commit -m "chore: update IP ranges - $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            git push
+            echo "✅ Successfully pushed changes"
+          fi
