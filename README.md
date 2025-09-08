@@ -12,4 +12,5 @@
     - IPv4/6: https://www.gstatic.com/ipranges/cloud.json
 - Oracle Cloud
     - IPv4/6: https://docs.oracle.com/iaas/tools/public_ip_ranges.json
-Linode - https://geoip.linode.com/
+- Linode 
+    - IPv4/6: https://geoip.linode.com/
