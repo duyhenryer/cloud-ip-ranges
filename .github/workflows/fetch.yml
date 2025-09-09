@@ -72,7 +72,6 @@ jobs:
               grep -E ':' data/telegram/cidr.txt | sort -u > data/telegram/ipv6.txt || true
               ;;
           esac
-          date -u '+%Y-%m-%d %H:%M:%S UTC' > data/${{ matrix.provider }}/last-updated.txt
 
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'schedule' || github.event.inputs.providers == 'all' || github.event.inputs.providers == matrix.provider
