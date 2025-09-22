@@ -130,8 +130,8 @@ jobs:
 
       - name: Commit & Push
         run: |
-          git config --local user.email "duynhbot@users.noreply.github.com"
-          git config --local user.name "duynhbot"
+          git config --local user.email "duynebot@users.noreply.github.com"
+          git config --local user.name "duynebot"
           git add data all-ipv4.txt all-ipv6.txt
           
           # Check if there are changes to commit
