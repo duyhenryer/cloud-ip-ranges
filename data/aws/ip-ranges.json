@@ -1,6 +1,6 @@
 {
-  "syncToken": "1760549303",
-  "createDate": "2025-10-15-17-28-23",
+  "syncToken": "1760567911",
+  "createDate": "2025-10-15-22-38-31",
   "prefixes": [
     {
       "ip_prefix": "3.4.12.4/32",
@@ -48271,6 +48271,12 @@
       "region": "cn-northwest-1",
       "service": "API_GATEWAY",
       "network_border_group": "cn-northwest-1"
+    },
+    {
+      "ip_prefix": "51.224.184.0/24",
+      "region": "eusc-de-east-1",
+      "service": "API_GATEWAY",
+      "network_border_group": "eusc-de-east-1"
     },
     {
       "ip_prefix": "18.252.56.0/23",
