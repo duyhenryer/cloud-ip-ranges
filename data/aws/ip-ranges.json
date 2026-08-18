@@ -1,6 +1,6 @@
 {
-  "syncToken": "1787055425",
-  "createDate": "2026-08-18-12-17-05",
+  "syncToken": "1787072225",
+  "createDate": "2026-08-18-16-57-05",
   "prefixes": [
     {
       "ip_prefix": "3.4.12.4/32",
@@ -54901,6 +54901,12 @@
       "region": "cn-northwest-1",
       "service": "CODEBUILD",
       "network_border_group": "cn-northwest-1"
+    },
+    {
+      "ip_prefix": "51.72.26.64/28",
+      "region": "eusc-de-east-1",
+      "service": "CODEBUILD",
+      "network_border_group": "eusc-de-east-1"
     },
     {
       "ip_prefix": "18.252.145.168/29",
